@@ -44,7 +44,7 @@ class _MainPageState extends State<MainPage>
   void getSessionLogin() async {
     var isLoggedIn = await sessionManager.get("isLoggedIn");
 
-    if (isLoggedIn == null){
+    if (isLoggedIn == null) {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (_) => WelcomeBackPage()));
     }
@@ -57,13 +57,12 @@ class _MainPageState extends State<MainPage>
 
   @override
   Future<void> getCategory() async {
-
     isLoadingData = true;
     category.clear();
     categories.clear();
 
     final response = await http.post(
-      Uri.parse(global.appUrl+"/kategori.php"),
+      Uri.parse(global.appUrl + "/kategori.php"),
       headers: {
         'Authorization': global.bearerToken
       },
@@ -72,13 +71,11 @@ class _MainPageState extends State<MainPage>
     var result = jsonDecode(response.body);
 
     if (response.statusCode == 201) {
-
       result['data'].forEach((element) {
-        if(category.contains(element["nama_kategori"]) == false ){
+        if (category.contains(element["nama_kategori"]) == false) {
           category.add(element["nama_kategori"]);
           categories.add(Tab(text: element["nama_kategori"]));
         }
-
       });
 
       tabController = TabController(length: categories.length, vsync: this);
@@ -87,29 +84,29 @@ class _MainPageState extends State<MainPage>
       await getProduct();
 
       isLoadingData = false;
-
-    } else if(response.statusCode == 401) {
+    } else if (response.statusCode == 401) {
       return showToast(result['message'], gravity: Toast.bottom);
-    }else{
-      return showToast("Login Gagal", gravity: Toast.bottom);
+    } else {
+      return showToast("Gagal", gravity: Toast.bottom);
     }
   }
 
   @override
   Future<void> getProduct() async {
-
     isLoadingData = true;
     products.clear();
 
     final response = await http.post(
-      Uri.parse(global.appUrl+"/produk.php"),
+      Uri.parse(global.appUrl + "/produk.php"),
       body: {
-        'param' : 'getHero'
+        'param': 'getHero'
       },
       headers: {
         'Authorization': global.bearerToken
       },
     );
+
+    products.clear();
 
 
     var result = jsonDecode(response.body.toString());
@@ -117,42 +114,47 @@ class _MainPageState extends State<MainPage>
     if (response.statusCode == 201) {
       result['data'].forEach((element) {
         // print(element['stok']);
-        products.add(Product(element['gambar'], element['nama'], element['keterangan'], element['harga'], element['stok'], element['id_produk']));
+        products.add(Product(
+            element['gambar'], element['nama'], element['keterangan'],
+            element['harga'], element['stok'], element['id_produk']));
       });
     }
 
     isLoadingData = false;
-
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     getSessionLogin();
     getCategory();
-    getProduct();
+    // getProduct();
 
     // tabController = TabController(length: category.length, vsync: this);
     bottomTabController = TabController(length: 4, vsync: this);
-
   }
-
 
 
   @override
   Widget build(BuildContext context) {
     Widget appBar = Container(
-      height: kToolbarHeight + MediaQuery.of(context).padding.top,
+      height: kToolbarHeight + MediaQuery
+          .of(context)
+          .padding
+          .top,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           IconButton(
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => NotificationsPage())),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(
+                      MaterialPageRoute(builder: (_) => NotificationsPage())),
               icon: Icon(Icons.notifications)),
           IconButton(
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => SearchPage())),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => SearchPage())),
               icon: SvgPicture.asset('assets/icons/search_icon.svg'))
         ],
       ),
@@ -161,74 +163,90 @@ class _MainPageState extends State<MainPage>
 
     return Scaffold(
       bottomNavigationBar: CustomBottomBar(controller: bottomTabController),
-      body: CustomPaint(
-        painter: MainBackground(),
-        child:  FutureBuilder(
-          future: Future.delayed(Duration.zero, () =>getCategory()),
-          builder: (context, snapshot) {
-
-
-
-              if(isLoadingData){
-                return DefaultTextStyle(
-                    style: Theme.of(context).textTheme.displayMedium!,
-                    textAlign: TextAlign.center,
-                    child: SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                };
-
-               return TabBarView(
-                  controller: bottomTabController,
-                  physics: NeverScrollableScrollPhysics(),
-                  children: <Widget>[
-                    SafeArea(
-                      child: NestedScrollView(
-                        headerSliverBuilder:
-                            (BuildContext context, bool innerBoxIsScrolled) {
-                          // These are the slivers that show up in the "outer" scroll view.
-                          return <Widget>[
-                            SliverToBoxAdapter(
-                              child: appBar,
+      body: Container(
+          width: MediaQuery
+              .of(context)
+              .size
+              .width,
+          height: MediaQuery
+              .of(context)
+              .size
+              .height,
+          child: CustomPaint(
+              painter: MainBackground(),
+              child: FutureBuilder(
+                  future: Future.delayed(Duration.zero, () => getCategory()),
+                  builder: (context, snapshot) {
+                    if (isLoadingData) {
+                      return DefaultTextStyle(
+                        style: Theme
+                            .of(context)
+                            .textTheme
+                            .displayMedium!,
+                        textAlign: TextAlign.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            CircularProgressIndicator(
+                              semanticsLabel: 'Circular progress indicator',
                             ),
-                            SliverToBoxAdapter(
-                              child: ProductList(
-                                products: products,
-                              ),
-                            ),
-                            SliverToBoxAdapter(
-                              child: TabBar(
-                                tabs: categories,
-                                labelStyle: TextStyle(fontSize: 16.0),
-                                unselectedLabelStyle: TextStyle(
-                                  fontSize: 14.0,
+                          ]
+                        )
+                      );
+                    }
+
+                    return TabBarView(
+                      controller: bottomTabController,
+                      physics: NeverScrollableScrollPhysics(),
+                      children: <Widget>[
+                        SafeArea(
+                          child: NestedScrollView(
+                            headerSliverBuilder:
+                                (BuildContext context,
+                                bool innerBoxIsScrolled) {
+                              // These are the slivers that show up in the "outer" scroll view.
+                              return <Widget>[
+                                SliverToBoxAdapter(
+                                  child: appBar,
                                 ),
-                                labelColor: darkGrey,
-                                unselectedLabelColor: Color.fromRGBO(0, 0, 0, 0.5),
-                                isScrollable: true,
-                                controller: tabController,
-                              ),
-                            )
-                          ];
-                        },
-                        body: TabView(
-                          tabController: tabController,
-                          category:category
+                                SliverToBoxAdapter(
+                                  child: ProductList(
+                                    products: products,
+                                  ),
+                                ),
+                                SliverToBoxAdapter(
+                                  child: TabBar(
+                                    tabs: categories,
+                                    labelStyle: TextStyle(fontSize: 16.0),
+                                    unselectedLabelStyle: TextStyle(
+                                      fontSize: 14.0,
+                                    ),
+                                    labelColor: darkGrey,
+                                    unselectedLabelColor: Color.fromRGBO(
+                                        0, 0, 0, 0.5),
+                                    isScrollable: true,
+                                    controller: tabController,
+                                  ),
+                                )
+                              ];
+                            },
+                            body: TabView(
+                                tabController: tabController,
+                                category: category
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    CategoryListPage(),
-                    CheckOutPage(),
-                    ProfilePage(),
+                        CategoryListPage(),
+                        CheckOutPage(),
+                        ProfilePage(),
 
-                  ],
-                );
-          }
-       ),
+                      ],
+                    );
+                  }
+              )
+          )
       ),
     );
   }
+
 }

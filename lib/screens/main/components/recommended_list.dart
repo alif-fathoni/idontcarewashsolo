@@ -100,10 +100,13 @@ class _ProductListState extends State<ProductList> {
             return DefaultTextStyle(
               style: Theme.of(context).textTheme.displayMedium!,
               textAlign: TextAlign.center,
-              child: SizedBox(
-                width: 60,
-                height: 60,
-                child: CircularProgressIndicator(),
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    CircularProgressIndicator(
+                      semanticsLabel: 'Circular progress indicator',
+                    ),
+                  ]
               ),
             );
           };

@@ -53,8 +53,9 @@ class _ProductPageState extends State<ProductPage> {
     var id_user = await sessionManager.get("id");
 
     final response = await http.post(
-      Uri.parse(global.appUrl+"/add_cart.php"),
+      Uri.parse(global.appUrl+"/post_cart.php"),
       body: {
+        'param' : 'addCart',
         'id_produk' : product.id,
         'id_pembeli' : id_user.toString()
       },

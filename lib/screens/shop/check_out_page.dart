@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:ecommerce_int2/models/globals.dart' as global;
 import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:http/http.dart' as http;
+import 'package:toast/toast.dart';
 import '../auth/welcome_back_page.dart';
+import '../main/main_page.dart';
 import 'components/credit_card.dart';
 import 'components/shop_item_list.dart';
 
@@ -24,13 +26,21 @@ class _CheckOutPageState extends State<CheckOutPage> {
   var sessionManager = SessionManager();
 
   List<Product> products = [];
+  List<String> productArrays = [];
 
   var isLoadingData = false;
+
+
+  void showToast(String msg, {int? duration, int? gravity}) {
+    ToastContext().init(context);
+    Toast.show(msg, duration: duration, gravity: gravity);
+  }
 
   Future<void> getProduct() async {
 
     isLoadingData = true;
     products.clear();
+    productArrays.clear();
 
     var id_user = await sessionManager.get("id");
 
@@ -44,7 +54,7 @@ class _CheckOutPageState extends State<CheckOutPage> {
       },
     );
 
-    print(id_user);
+    // print(id_user);
 
 
     var result = jsonDecode(response.body.toString());
@@ -53,7 +63,11 @@ class _CheckOutPageState extends State<CheckOutPage> {
     if (response.statusCode == 201) {
       result['data'].forEach((element) {
         // print(element['stok']);
-        products.add(Product(element['gambar'], element['nama'], element['keterangan'], element['harga'], element['stok'], element['id_produk']));
+        if (productArrays.contains(element["id_produk"]) == false) {
+          products.add(Product(element['gambar'], element['nama'], element['keterangan'], element['harga'], element['stok'], element['id_produk']));
+          productArrays.add(element['id_produk']);
+        }
+
       });
     }
 
@@ -108,6 +122,43 @@ class _CheckOutPageState extends State<CheckOutPage> {
       ),
     );
 
+
+    @override
+    Future<void> deleteCart(String product_id) async {
+
+      var id_user = await sessionManager.get("id");
+
+      final response = await http.post(
+        Uri.parse(global.appUrl+"/post_cart.php"),
+        body: {
+          'param' : 'deleteCart',
+          'id_produk' : product_id.toString(),
+          'id_pembeli' : id_user.toString()
+        },
+        headers: {
+          'Authorization': global.bearerToken
+        },
+      );
+
+      var result = jsonDecode(response.body.toString());
+
+      print(result);
+
+      if (response.statusCode == 201) {
+        showToast("Cart berhasil dihapus", gravity: Toast.bottom);
+
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => CheckOutPage()));
+
+      } else if(response.statusCode == 401) {
+        return showToast(result['message'], gravity: Toast.bottom);
+      }else{
+        return showToast("Proses Gagal, Periksa Koneksi !", gravity: Toast.bottom);
+      }
+    }
+
+
+
     return FutureBuilder(
         future: Future.delayed(Duration.zero, () => getProduct()),
         builder: (context, snapshot) {
@@ -129,7 +180,11 @@ class _CheckOutPageState extends State<CheckOutPage> {
           return Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
-              automaticallyImplyLeading: false,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => MainPage()))
+              ),
               backgroundColor: Colors.transparent,
               elevation: 0.0,
               iconTheme: IconThemeData(color: darkGrey),
@@ -186,7 +241,9 @@ class _CheckOutPageState extends State<CheckOutPage> {
                               products[index],
                               onRemove: () {
                                 setState(() {
+                                  print(productArrays[index].toString());
                                   products.remove(products[index]);
+                                  deleteCart(productArrays[index].toString());
                                 });
                               },
                             ),
